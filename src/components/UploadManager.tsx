@@ -51,7 +51,7 @@ const UploadManager = () => {
                     <Card className="p-4">
                         <p className="text-sm font-semibold mb-2">Required Columns</p>
                         <div className="flex flex-wrap gap-1.5">
-                            {["sender", "receiver", "amount", "timestamp"].map((col) => (
+                            {["transaction_id", "sender_id", "receiver_id", "amount", "timestamp"].map((col) => (
                                 <Badge key={col} variant="secondary" className="font-mono text-xs">{col}</Badge>
                             ))}
                         </div>
@@ -80,7 +80,12 @@ const UploadManager = () => {
                                 { ok: true, label: `${validationResult.rowsParsed.toLocaleString()} rows parsed` },
                             ].map((v, i) => (
                                 <div key={i} className="flex items-center gap-2 text-sm">
-                                    <CheckCircle2 size={14} className="text-risk-low" />
+                                    {/* <CheckCircle2 size={14} className="text-risk-low" /> */}
+                                    {v.ok ? (
+                                        <CheckCircle2 size={14} className="text-risk-low" />
+                                    ) : (
+                                        <AlertTriangle size={14} className="text-risk-medium" />
+                                    )}
                                     <span>{v.label}</span>
                                 </div>
                             ))}
@@ -92,6 +97,13 @@ const UploadManager = () => {
                             )}
                         </Card>
                     )}
+                    {validationResult && !validationResult.columnsDetected && (
+                        <Card className="p-3 border border-destructive/30 bg-destructive/5 text-sm">
+                            ❌ Invalid CSV format. Required columns:
+                            <span className="font-mono"> transaction_id, sender_id, receiver_id, amount, timestamp</span>
+                        </Card>
+                    )}
+
 
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" onClick={validateFile} disabled={!uploadedFile || isProcessing}>
@@ -100,7 +112,11 @@ const UploadManager = () => {
                         <Button variant="outline" size="sm" onClick={() => { loadSampleData(); }} className="gap-1">
                             <Download size={14} /> Sample
                         </Button>
-                        <Button size="sm" onClick={runAnalysis} disabled={!uploadedFile || isProcessing} className="gap-1">
+                        <Button size="sm" onClick={runAnalysis} disabled={
+                            !uploadedFile ||
+                            isProcessing ||
+                            (validationResult !== null && !validationResult.columnsDetected)
+                        } className="gap-1">
                             {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <BarChart3 size={14} />}
                             Run Detection
                         </Button>

@@ -89,55 +89,104 @@ export const useAppStore = create<AppState>((set, get) => ({
   setUploadedFile: (file) =>
     set({ uploadedFile: file, validationResult: null }),
 
-  validateFile: () => {
+  validateFile: async () => {
     const file = get().uploadedFile;
     if (!file) return;
-    set({
-      validationResult: {
-        columnsDetected: true,
-        timestampValid: true,
-        amountNumeric: true,
-        amountPositive: true,
-        duplicateTxCount: 0,
-        rowsParsed: 14223,
-        invalidRows: 0,
-        columns: ["sender", "receiver", "amount", "timestamp", "tx_id"],
-      },
-    });
+
+    try {
+      const text = await file.text();
+      const firstLine = text.split(/\r?\n/)[0] || "";
+      const headers = firstLine.split(",").map(h => h.trim());
+
+      const required = ["transaction_id", "sender_id", "receiver_id", "amount", "timestamp"];
+      const missing = required.filter(col => !headers.includes(col));
+
+      const columnsDetected = missing.length === 0;
+
+      set({
+        validationResult: {
+          columnsDetected,
+          timestampValid: columnsDetected,  // basic for now
+          amountNumeric: columnsDetected,   // basic for now
+          amountPositive: true,
+          duplicateTxCount: 0,
+          rowsParsed: Math.max(0, text.split(/\r?\n/).length - 1),
+          invalidRows: 0,
+          columns: headers,
+        },
+      });
+
+      if (!columnsDetected) {
+        alert(`Invalid CSV: missing columns -> ${missing.join(", ")}`);
+      }
+    } catch (e) {
+      set({ validationResult: null });
+      alert("Could not read the CSV file.");
+    }
   },
 
+
   runAnalysis: async () => {
+    const file = get().uploadedFile;
+    if (!file) return;
+
     set({ isProcessing: true });
-    const start = performance.now();
-    await new Promise((r) => setTimeout(r, 1800 + Math.random() * 1200));
-    const elapsed = parseFloat(((performance.now() - start) / 1000).toFixed(1));
-    const newCase: CaseRun = {
-      id: `CASE-${new Date().getFullYear()}-${String(sampleCases.length + 43).padStart(4, "0")}`,
-      date: new Date().toISOString().slice(0, 10),
-      fileName: get().uploadedFile?.name ?? "uploaded.csv",
-      datasetSize: 14200,
-      nodeCount: 342,
-      edgeCount: 1287,
-      txCount: 14200,
-      suspiciousCount: sampleAccounts.filter((a) => a.riskScore >= 60).length,
-      ringCount: sampleRings.length,
-      processingTime: elapsed,
-      riskExposure: 78,
-      timeWindow: "2024-10-01 → 2024-12-14",
-      topPatterns: ["cycle", "fan-in", "layering"],
-      riskLevel: "high",
-    };
-    set({
-      isProcessing: false,
-      processingTime: elapsed,
-      hasAnalysis: true,
-      accounts: sampleAccounts,
-      rings: sampleRings,
-      edges: sampleEdges,
-      currentCase: newCase,
-      cases: [newCase, ...get().cases],
-    });
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("http://127.0.0.1:8000/analyze", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        set({ isProcessing: false });
+        alert(err.detail || "Invalid dataset");
+        return;
+      }
+
+      const data = await response.json();
+
+      set({
+        isProcessing: false,
+        hasAnalysis: true,
+        accounts: data.suspicious_accounts || [],
+        rings: data.rings || [],
+        edges: data.edges || [],
+        currentCase: {
+          id: `CASE-${Date.now()}`,
+          date: new Date().toISOString().slice(0, 10),
+          fileName: file.name,
+
+          datasetSize: data.total_transactions || 0,
+          nodeCount: data.total_entities || 0,
+          edgeCount: data.total_edges || 0,
+          txCount: data.total_transactions || 0,
+
+          suspiciousCount: data.suspicious_accounts?.length || 0,
+          ringCount: data.rings?.length || 0,
+
+          processingTime: data.processing_time || 0,
+
+          riskExposure: 0, // can compute later
+          timeWindow: "",  // backend can send this later
+          topPatterns: [], // backend can send detected patterns later
+
+          riskLevel: "medium",
+        },
+
+        cases: [],
+      });
+
+    } catch (error) {
+      console.error(error);
+      set({ isProcessing: false });
+    }
   },
+
 
   selectAccount: (id) => set({ selectedAccountId: id }),
   selectRing: (id) => set({ selectedRingId: id }),

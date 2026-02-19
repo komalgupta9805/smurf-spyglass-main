@@ -1,4 +1,4 @@
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, File, HTTPException
 import pandas as pd
 import time
@@ -17,6 +17,17 @@ app = FastAPI(
     description="Explainable, deterministic AML decision-support system",
     version="3.0.0"
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8081",
+        "http://127.0.0.1:8081",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/health")
 def health_check():
