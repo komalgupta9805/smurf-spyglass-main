@@ -3,14 +3,14 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 import pandas as pd
 import time
 
-from validators import validate_csv
-from graph_builder import build_graph
+from detectors.validators import validate_csv
+from detectors.graph_builder import build_graph
 from detectors.cycle_detector import detect_cycles
 from detectors.smurfing_detector import detect_smurfing
 from detectors.shell_detector import detect_shell_chains
 from detectors.ring_merger import merge_rings
-from scoring import score_account
-from refinement import final_format
+from detectors.scoring import score_account
+from detectors.refinement import final_format
 
 app = FastAPI(
     title="MuleCatcher AML Engine",
