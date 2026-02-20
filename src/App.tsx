@@ -2,27 +2,23 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Suspense } from "react-router-dom";
-import { lazy } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Home from "@/pages/Home";
-import PageSkeleton from "@/components/PageSkeleton";
-
-// Lazy load heavy pages for code splitting
-const Analytics = lazy(() => import("@/pages/Analytics"));
-const TransactionGraph = lazy(() => import("@/pages/TransactionGraph"));
-const Entities = lazy(() => import("@/pages/Entities"));
-const Intervention = lazy(() => import("@/pages/Intervention"));
-const Benchmark = lazy(() => import("@/pages/Benchmark"));
-const Report = lazy(() => import("@/pages/Report"));
-const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
+import Analytics from "@/pages/Analytics";
+import TransactionGraph from "@/pages/TransactionGraph";
+import Entities from "@/pages/Entities";
+import Intervention from "@/pages/Intervention";
+import Benchmark from "@/pages/Benchmark";
+import Report from "@/pages/Report";
+import SettingsPage from "@/pages/SettingsPage";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
     },
   },
 });
@@ -36,71 +32,15 @@ const App = () => (
         <Routes>
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<Home />} />
-            <Route
-              path="/analytics"
-              element={
-                <Suspense fallback={<PageSkeleton type="analytics" />}>
-                  <Analytics />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/graph"
-              element={
-                <Suspense fallback={<PageSkeleton type="chart" />}>
-                  <TransactionGraph />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/entities"
-              element={
-                <Suspense fallback={<PageSkeleton type="table" />}>
-                  <Entities />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/intervention"
-              element={
-                <Suspense fallback={<PageSkeleton type="full" />}>
-                  <Intervention />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/benchmark"
-              element={
-                <Suspense fallback={<PageSkeleton type="chart" count={3} />}>
-                  <Benchmark />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/report"
-              element={
-                <Suspense fallback={<PageSkeleton type="analytics" />}>
-                  <Report />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <Suspense fallback={<PageSkeleton type="full" count={4} />}>
-                  <SettingsPage />
-                </Suspense>
-              }
-            />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/graph" element={<TransactionGraph />} />
+            <Route path="/entities" element={<Entities />} />
+            <Route path="/intervention" element={<Intervention />} />
+            <Route path="/benchmark" element={<Benchmark />} />
+            <Route path="/report" element={<Report />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
-          <Route
-            path="*"
-            element={
-              <Suspense fallback={<PageSkeleton type="full" />}>
-                <NotFound />
-              </Suspense>
-            }
-          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
