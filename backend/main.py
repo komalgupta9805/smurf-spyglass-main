@@ -76,6 +76,10 @@ async def analyze(file: UploadFile = File(...)):
             "detected_patterns": list(patterns)
         })
 
+    total_transactions = int(len(df))
+    total_entities = int(pd.unique(pd.concat([df["sender_id"], df["receiver_id"]])).size)
+    total_edges = int(df[["sender_id", "receiver_id"]].drop_duplicates().shape[0])
+
     processing_time = time.time() - start_time
 
-    return final_format(suspicious_accounts, rings, df, processing_time)
+    return final_format(suspicious_accounts, rings, df, processing_time, total_entities, total_transactions, total_edges)

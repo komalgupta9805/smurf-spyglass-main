@@ -10,7 +10,7 @@ def validate_csv(df):
             summary["columns_valid"] = False
 
     try:
-        df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S")
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
     except:
         summary["timestamp_valid"] = False
 

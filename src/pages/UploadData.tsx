@@ -69,7 +69,11 @@ const UploadData = () => {
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-primary" />
             <span className="text-sm font-medium">{uploadedFile.name}</span>
-            <span className="text-xs text-muted-foreground ml-auto">{(uploadedFile.size / 1024).toFixed(0)} KB</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {uploadedFile.size < 1024
+                ? `${uploadedFile.size} B`
+                : `${(uploadedFile.size / 1024).toFixed(1)} KB`}
+            </span>
           </div>
         </Card>
       )}

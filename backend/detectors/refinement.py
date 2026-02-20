@@ -30,7 +30,7 @@ def calculate_ring_time_window(df, ring_accounts):
         "duration_hours": round((end - start).total_seconds()/3600,2)
     }
 
-def final_format(accounts, rings, df, processing_time):
+def final_format(accounts, rings, df, processing_time, total_entities, total_transactions, total_edges):
 
     account_ring_map = map_accounts_to_rings(rings)
 
@@ -55,9 +55,11 @@ def final_format(accounts, rings, df, processing_time):
         "suspicious_accounts": formatted_accounts,
         "fraud_rings": rings,
         "summary": {
-            "total_accounts_analyzed": len(set(df["sender_id"]).union(set(df["receiver_id"]))),
+            "total_accounts_analyzed": total_entities,
+            "total_transactions": total_transactions,
+            "total_edges": total_edges,
             "suspicious_accounts_flagged": len(formatted_accounts),
             "fraud_rings_detected": len(rings),
-            "processing_time_seconds": round(processing_time,2)
+            "processing_time_seconds": round(processing_time, 2),
         }
     }

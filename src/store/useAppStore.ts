@@ -6,6 +6,7 @@ import {
   sampleEdges,
   sampleCases,
 } from "@/lib/mockData";
+import { API_BASE_URL } from "@/src/config";
 
 interface AppState {
   hasAnalysis: boolean;
@@ -132,11 +133,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ isProcessing: true });
 
+    const countCsvRows = async (file: File) => {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      return Math.max(0, lines.length - 1); // minus header row
+    };
+
     try {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://127.0.0.1:8000/analyze", {
+      const response = await fetch(`${API_BASE_URL}/analyze`, {
         method: "POST",
         body: formData,
       });
@@ -149,32 +156,55 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       const data = await response.json();
+      const txCount = await countCsvRows(file);
 
       set({
         isProcessing: false,
         hasAnalysis: true,
-        accounts: data.suspicious_accounts || [],
-        rings: data.rings || [],
-        edges: data.edges || [],
+        accounts: (data.suspicious_accounts || []).map((a: any) => ({
+          id: a.account_id,
+          riskScore: a.suspicion_score,
+          confidence: 0.8,
+          ringId: a.ring_id ?? null,
+          inDegree: 0,
+          outDegree: 0,
+          uniqueCounterparties: 0,
+          velocityLabel: "medium",
+          patterns: a.detected_patterns || [],
+          totalIn: 0,
+          totalOut: 0,
+          txCount: data.summary?.total_transactions || 0,
+          sccId: null,
+          kCoreLevel: 0,
+          centralityScore: 0,
+          scoreBreakdown: [],
+        })),
+        rings: (data.fraud_rings || []).map((r: any) => ({
+          id: r.ring_id,
+          riskScore: r.risk_score,
+          confidence: 0.8,
+          members: r.member_accounts || [],
+          patternType: r.pattern_type || "structural",
+          cycleLength: (r.member_accounts?.length || 0),
+          avgTxSize: 0,
+          timeWindow: `${r.time_window?.start_time ?? ""} → ${r.time_window?.end_time ?? ""}`,
+          totalFlow: 0,
+        })),
+        edges: [],
         currentCase: {
           id: `CASE-${Date.now()}`,
           date: new Date().toISOString().slice(0, 10),
           fileName: file.name,
-
-          datasetSize: data.total_transactions || 0,
-          nodeCount: data.total_entities || 0,
-          edgeCount: data.total_edges || 0,
-          txCount: data.total_transactions || 0,
-
-          suspiciousCount: data.suspicious_accounts?.length || 0,
-          ringCount: data.rings?.length || 0,
-
-          processingTime: data.processing_time || 0,
-
-          riskExposure: 0, // can compute later
-          timeWindow: "",  // backend can send this later
-          topPatterns: [], // backend can send detected patterns later
-
+          datasetSize: 0,
+          nodeCount: data.summary?.total_accounts_analyzed || 0,
+          edgeCount: 0,
+          txCount: data.summary?.total_transactions || 0,
+          suspiciousCount: data.summary?.suspicious_accounts_flagged || 0,
+          ringCount: data.summary?.fraud_rings_detected || 0,
+          processingTime: data.summary?.processing_time_seconds || 0,
+          riskExposure: 0,
+          timeWindow: "",
+          topPatterns: ["cycle"],
           riskLevel: "medium",
         },
 
@@ -183,6 +213,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     } catch (error) {
       console.error(error);
+      alert(String(error));
       set({ isProcessing: false });
     }
   },

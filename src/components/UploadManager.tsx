@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, BarChart3, Network, Download } from "lucide-react";
 
+const formatBytes = (bytes: number) => {
+    if (!bytes) return "0 B";
+    const k = 1024;
+    if (bytes < k) return `${bytes} B`;
+    if (bytes < k * k) return `${(bytes / k).toFixed(1)} KB`;
+    return `${(bytes / (k * k)).toFixed(1)} MB`;
+};
+
 const UploadManager = () => {
     const { uploadedFile, setUploadedFile, validationResult, validateFile, runAnalysis, isProcessing, hasAnalysis, loadSampleData } = useAppStore();
     const nav = useNavigate();
@@ -65,7 +73,7 @@ const UploadManager = () => {
                             <div className="flex items-center gap-2">
                                 <FileText size={16} className="text-primary" />
                                 <span className="text-sm font-medium">{uploadedFile.name}</span>
-                                <span className="text-xs text-muted-foreground ml-auto">{(uploadedFile.size / 1024).toFixed(0)} KB</span>
+                                <span className="text-xs text-muted-foreground ml-auto">{formatBytes(uploadedFile.size)}</span>
                             </div>
                         </Card>
                     )}
