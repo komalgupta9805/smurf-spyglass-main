@@ -162,6 +162,8 @@ const PatternBadge = memo(({ pattern }: { pattern: string }) => {
   );
 });
 
+PatternBadge.displayName = "PatternBadge";
+
 const Analytics = () => {
   const { hasAnalysis, currentCase, accounts, edges, rings, openWhyPanel, selectRing, setRingFocusMode, patternInterpretations, investigationRecommendations } = useAppStore();
   const nav = useNavigate();

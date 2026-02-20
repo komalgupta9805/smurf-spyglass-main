@@ -7,7 +7,7 @@ import {
   sampleEdges,
   sampleCases,
 } from "@/lib/mockData";
-import { API_BASE_URL } from "@/src/config";
+import { API_BASE_URL } from "@/config";
 import { interpretAllPatterns } from "@/lib/ai/patternInterpreter";
 import { explainAllRisks } from "@/lib/ai/riskExplainer";
 import { generateInvestigationRecommendations } from "@/lib/ai/investigationRecommender";
@@ -321,7 +321,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       riskExplanations,
       investigationRecommendations,
       caseSummary,
-    });
     });
   },
 

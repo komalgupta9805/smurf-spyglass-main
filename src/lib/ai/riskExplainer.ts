@@ -3,7 +3,8 @@
  * Explains "why" an account is flagged without changing the score
  */
 
-import type { Account, getRiskLevel } from "@/lib/types";
+import type { Account } from "@/lib/types";
+import { getRiskLevel } from "@/lib/types";
 import type { RiskExplanation, RiskFactor } from "./types";
 
 export function explainRiskScore(account: Account): RiskExplanation {

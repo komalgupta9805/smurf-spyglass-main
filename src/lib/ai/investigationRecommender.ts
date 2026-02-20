@@ -3,7 +3,7 @@
  * Purely informational - does not influence risk scoring
  */
 
-import type { Account, Ring, getRiskLevel } from "@/lib/types";
+import type { Account, Ring } from "@/lib/types";
 import type { InvestigationRecommendation } from "./types";
 
 export function generateInvestigationRecommendations(
