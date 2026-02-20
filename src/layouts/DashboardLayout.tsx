@@ -2,10 +2,9 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { HelpCircle, Clock, Shield, Settings, Lightbulb } from "lucide-react";
+import { HelpCircle, Clock, Shield, Settings } from "lucide-react";
 import WhyScorePanel from "@/components/WhyScorePanel";
 import SettingsDrawer from "@/components/SettingsDrawer";
-import AIInsightPanel from "@/components/AIInsightPanel";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +20,6 @@ const tabs = [
 
 const DashboardLayout = () => {
   const processingTime = useAppStore((s) => s.processingTime);
-  const hasAnalysis = useAppStore((s) => s.hasAnalysis);
-  const showAIPanel = useAppStore((s) => s.showAIPanel);
-  const toggleAIPanel = useAppStore((s) => s.toggleAIPanel);
-  const patternInterpretations = useAppStore((s) => s.patternInterpretations);
-  const riskExplanations = useAppStore((s) => s.riskExplanations);
-  const investigationRecommendations = useAppStore((s) => s.investigationRecommendations);
   const location = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -70,20 +63,6 @@ const DashboardLayout = () => {
                 <Clock size={12} />
                 Last: {processingTime}s
               </div>
-            )}
-
-            {hasAnalysis && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleAIPanel}
-                    className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-all duration-200 hover:scale-110"
-                  >
-                    <Lightbulb size={16} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">AI Insights & Interpretations</TooltipContent>
-              </Tooltip>
             )}
 
             <Tooltip>

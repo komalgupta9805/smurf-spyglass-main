@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { Account, Ring, CaseRun, GraphEdge, ValidationResult, Settings, InterventionAction, MitigationSummary } from "@/lib/types";
-import type { PatternInterpretation, RiskExplanation, InvestigationRecommendation, CaseSummary } from "@/lib/ai/types";
 import {
   sampleAccounts,
   sampleRings,
@@ -8,10 +7,6 @@ import {
   sampleCases,
 } from "@/lib/mockData";
 import { API_BASE_URL } from "@/config";
-import { interpretAllPatterns } from "@/lib/ai/patternInterpreter";
-import { explainAllRisks } from "@/lib/ai/riskExplainer";
-import { generateInvestigationRecommendations } from "@/lib/ai/investigationRecommender";
-import { generateCaseSummary } from "@/lib/ai/summaryGenerator";
 
 interface AppState {
   hasAnalysis: boolean;
@@ -38,13 +33,6 @@ interface AppState {
   interventionScenario: InterventionAction[];
   mitigationSummary: MitigationSummary | null;
 
-  // AI Interpretations (new)
-  patternInterpretations: Map<string, PatternInterpretation>;
-  riskExplanations: Map<string, RiskExplanation>;
-  investigationRecommendations: InvestigationRecommendation[];
-  caseSummary: CaseSummary | null;
-  showAIPanel: boolean;
-
   setUploadedFile: (file: File | null) => void;
   validateFile: () => void;
   runAnalysis: () => Promise<void>;
@@ -56,7 +44,6 @@ interface AppState {
   updateSettings: (s: Partial<Settings>) => void;
   resetAnalysis: () => void;
   loadSampleData: () => void;
-  toggleAIPanel: () => void;
 
   // Intervention actions
   addIntervention: (action: InterventionAction) => void;
@@ -99,11 +86,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   settings: { ...defaultSettings },
   interventionScenario: [],
   mitigationSummary: null,
-  patternInterpretations: new Map(),
-  riskExplanations: new Map(),
-  investigationRecommendations: [],
-  caseSummary: null,
-  showAIPanel: false,
 
   setUploadedFile: (file) =>
     set({ uploadedFile: file, validationResult: null }),
@@ -273,8 +255,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   openWhyPanel: (id) => set({ showWhyPanel: true, whyAccountId: id }),
   closeWhyPanel: () => set({ showWhyPanel: false, whyAccountId: null }),
 
-  toggleAIPanel: () => set((state) => ({ showAIPanel: !state.showAIPanel })),
-
   updateSettings: (s) =>
     set((state) => ({ settings: { ...state.settings, ...s } })),
 
@@ -294,66 +274,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
 
   loadSampleData: () => {
-    try {
-      const c = sampleCases[0];
-      const accounts = sampleAccounts;
-      const rings = sampleRings;
-      
-      // Generate AI interpretations safely
-      let patternInterpretations = new Map();
-      let riskExplanations = new Map();
-      let investigationRecommendations: InvestigationRecommendation[] = [];
-      let caseSummary: CaseSummary | null = null;
-
-      try {
-        patternInterpretations = interpretAllPatterns(rings, accounts);
-      } catch (e) {
-        console.warn("[v0] Pattern interpretation error:", e);
-      }
-
-      try {
-        riskExplanations = explainAllRisks(accounts);
-      } catch (e) {
-        console.warn("[v0] Risk explanation error:", e);
-      }
-
-      try {
-        investigationRecommendations = generateInvestigationRecommendations(
-          accounts.filter(a => a.riskScore >= 60),
-          rings
-        );
-      } catch (e) {
-        console.warn("[v0] Investigation recommendation error:", e);
-      }
-
-      try {
-        caseSummary = generateCaseSummary(c, accounts, rings);
-      } catch (e) {
-        console.warn("[v0] Case summary generation error:", e);
-      }
-
-      set({
-        hasAnalysis: true,
-        currentCase: c,
-        cases: sampleCases,
-        accounts,
-        rings,
-        edges: sampleEdges,
-        processingTime: c.processingTime,
-        mitigationSummary: null,
-        interventionScenario: [],
-        patternInterpretations,
-        riskExplanations,
-        investigationRecommendations,
-        caseSummary,
-      });
-    } catch (error) {
-      console.error("[v0] Error loading sample data:", error);
-      // Fall back to basic data
-      set({
-        hasAnalysis: false,
-      });
-    }
+    const c = sampleCases[0];
+    set({
+      hasAnalysis: true,
+      currentCase: c,
+      cases: sampleCases,
+      accounts: sampleAccounts,
+      rings: sampleRings,
+      edges: sampleEdges,
+      processingTime: c.processingTime,
+      mitigationSummary: null,
+      interventionScenario: [],
+    });
   },
 
   addIntervention: (action) =>
