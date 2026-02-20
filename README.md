@@ -1,11 +1,11 @@
-FIND THE VIDEO DEMONSTRATION HERE-  
+
 # Smurfatcher
 
 ## Deterministic Graph-Based Money Muling Detection Engine
 
-**Live Demo:** [Insert Live URL]
-**GitHub Repository:** [Insert Repo URL]
-**Demo Video:** [Insert LinkedIn Video URL]
+**Live Demo:** https://www.linkedin.com/posts/ananya-gupta-001601292_rift-rifthackathon-moneymulingdetection-activity-7430443933392035840-_eIv?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAEbsrsEBLdRyfwZu2XOEGhGwJLBCg7oWRv4
+**GitHub Repository:**(https://github.com/komalgupta9805/smurf-spyglass-main)
+
 
 ---
 
