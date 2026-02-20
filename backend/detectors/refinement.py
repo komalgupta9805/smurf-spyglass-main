@@ -30,7 +30,7 @@ def calculate_ring_time_window(df, ring_accounts):
         "duration_hours": round((end - start).total_seconds()/3600,2)
     }
 
-def final_format(accounts, rings, df, processing_time, total_entities, total_transactions, total_edges):
+def final_format(accounts, rings, df, processing_time, total_entities, total_transactions, total_edges, edges):
 
     account_ring_map = map_accounts_to_rings(rings)
 
@@ -41,7 +41,9 @@ def final_format(accounts, rings, df, processing_time, total_entities, total_tra
             "account_id": acc["account_id"],
             "suspicion_score": float(score),
             "detected_patterns": sorted(acc["detected_patterns"]),
-            "ring_id": account_ring_map.get(acc["account_id"], "NONE")
+            "ring_id": account_ring_map.get(acc["account_id"], "NONE"),
+            "in_degree": acc.get("in_degree", 0),
+            "out_degree": acc.get("out_degree", 0)
         })
 
     formatted_accounts = sorted(formatted_accounts,
@@ -54,10 +56,13 @@ def final_format(accounts, rings, df, processing_time, total_entities, total_tra
     return {
         "suspicious_accounts": formatted_accounts,
         "fraud_rings": rings,
+        "graph": {
+            "nodes": formatted_accounts,
+            "edges": edges
+        },
         "summary": {
             "total_accounts_analyzed": total_entities,
             "total_transactions": total_transactions,
-            "total_edges": total_edges,
             "suspicious_accounts_flagged": len(formatted_accounts),
             "fraud_rings_detected": len(rings),
             "processing_time_seconds": round(processing_time, 2),

@@ -53,6 +53,7 @@ export interface CaseRun {
 }
 
 export interface ValidationResult {
+  ok: boolean;
   columnsDetected: boolean;
   timestampValid: boolean;
   amountNumeric: boolean;
@@ -61,6 +62,7 @@ export interface ValidationResult {
   rowsParsed: number;
   invalidRows: number;
   columns: string[];
+  errorMessages?: string[];
 }
 
 export interface GraphEdge {

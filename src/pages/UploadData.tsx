@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, BarChart3, Network, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const UploadData = () => {
   const { uploadedFile, setUploadedFile, validationResult, validateFile, runAnalysis, isProcessing, hasAnalysis, loadSampleData } = useAppStore();
@@ -56,7 +57,7 @@ const UploadData = () => {
       <Card className="p-4">
         <p className="text-sm font-semibold mb-2">Required Columns</p>
         <div className="flex flex-wrap gap-1.5">
-          {["sender", "receiver", "amount", "timestamp"].map((col) => (
+          {["transaction_id", "sender_id", "receiver_id", "amount", "timestamp"].map((col) => (
             <Badge key={col} variant="secondary" className="font-mono text-xs">{col}</Badge>
           ))}
         </div>
@@ -80,8 +81,33 @@ const UploadData = () => {
 
       {/* Validation */}
       {validationResult && (
-        <Card className="p-4 space-y-3">
-          <p className="text-sm font-semibold">Analytical Integrity Check</p>
+        <Card className={cn("p-4 space-y-3 border-l-4", validationResult.ok ? "border-l-green-500" : "border-l-red-500")}>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">Analytical Integrity Check</p>
+            {validationResult.ok ? (
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">VALIDATED</Badge>
+            ) : (
+              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200">FILE REJECTED</Badge>
+            )}
+          </div>
+
+          {!validationResult.ok && validationResult.errorMessages && (
+            <div className="p-3 bg-red-500/10 rounded-md border border-red-200 space-y-2">
+              <p className="text-xs font-bold text-red-700 flex items-center gap-1.5 capitalize">
+                <AlertTriangle size={14} /> Critical Data Integrity Errors
+              </p>
+              <ul className="text-[11px] text-red-600 list-disc pl-4 space-y-1">
+                {validationResult.errorMessages.map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
+              <div className="pt-1 mt-2 border-t border-red-200/50">
+                <p className="text-[10px] text-red-500 uppercase font-bold tracking-tight">How to fix:</p>
+                <p className="text-[10px] text-red-600/80 italic">Ensure your CSV is sorted by timestamp and has no duplicate transaction IDs.</p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               { ok: validationResult.columnsDetected, label: `Column Schema`, detail: validationResult.columns.join(", ") },
@@ -119,7 +145,7 @@ const UploadData = () => {
         </Button>
         <Button
           onClick={runAnalysis}
-          disabled={!uploadedFile || !validationResult || isProcessing}
+          disabled={!uploadedFile || !validationResult || !validationResult.ok || isProcessing}
           className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <BarChart3 size={14} />}

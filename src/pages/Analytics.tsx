@@ -15,9 +15,6 @@ import HeatmapChart from "@/components/HeatmapChart";
 import FanInOutGraph from "@/components/FanInOutGraph";
 import { getRiskLevel } from "@/lib/types";
 import {
-  riskHistogramData, scatterData, heatmapData, velocityData,
-} from "@/lib/mockData";
-import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
   ScatterChart, Scatter, LineChart, Line, Cell,
   Tooltip as RTooltip,
@@ -30,10 +27,33 @@ import { cn } from "@/lib/utils";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const riskColor = (l: string) =>
   l === "high" ? "hsl(var(--risk-high))" : l === "medium" ? "hsl(var(--risk-medium))" : "hsl(var(--risk-low))";
+
+// Helper to generate dynamic histogram from accounts
+const generateHistogram = (accounts: any[]) => {
+  const bins = [
+    { range: "0-20", count: 0, pct: 0 },
+    { range: "21-40", count: 0, pct: 0 },
+    { range: "41-60", count: 0, pct: 0 },
+    { range: "61-80", count: 0, pct: 0 },
+    { range: "81-100", count: 0, pct: 0 },
+  ];
+
+  accounts.forEach(a => {
+    const score = a.riskScore;
+    if (score <= 20) bins[0].count++;
+    else if (score <= 40) bins[1].count++;
+    else if (score <= 60) bins[2].count++;
+    else if (score <= 80) bins[3].count++;
+    else bins[4].count++;
+  });
+
+  const total = accounts.length || 1;
+  return bins.map(b => ({ ...b, pct: Math.round((b.count / total) * 100) }));
+};
 
 const PatternVisual = ({ type }: { type: string }) => {
   switch (type) {
@@ -142,6 +162,16 @@ const Analytics = () => {
   const nav = useNavigate();
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
 
+  const realHistogram = useMemo(() => generateHistogram(accounts), [accounts]);
+  const scatterData = useMemo(() => accounts.map(a => ({
+    id: a.id,
+    riskScore: a.riskScore,
+    confidence: Math.round(a.confidence * 100),
+    level: getRiskLevel(a.riskScore),
+    ringId: a.ringId,
+    pattern: a.patterns[0]
+  })), [accounts]);
+
   if (!hasAnalysis || !currentCase) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
@@ -153,8 +183,12 @@ const Analytics = () => {
 
   const suspicious = accounts.filter((a) => a.riskScore >= 60).sort((a, b) => b.riskScore - a.riskScore);
   const topRings = [...rings].sort((a, b) => b.riskScore - a.riskScore);
-  const maxDeg = accounts.reduce((m, a) => (a.inDegree > (m?.inDegree ?? 0) ? a : m), accounts[0]);
-  const maxOut = accounts.reduce((m, a) => (a.outDegree > (m?.outDegree ?? 0) ? a : m), accounts[0]);
+  const maxDeg = accounts.length > 0
+    ? accounts.reduce((m, a) => (a.inDegree > m.inDegree ? a : m), accounts[0])
+    : { id: "N/A", inDegree: 0 };
+  const maxOut = accounts.length > 0
+    ? accounts.reduce((m, a) => (a.outDegree > m.outDegree ? a : m), accounts[0])
+    : { id: "N/A", outDegree: 0 };
   const topCentral = [...accounts].sort((a, b) => b.centralityScore - a.centralityScore).slice(0, 5);
 
   return (
@@ -220,7 +254,7 @@ const Analytics = () => {
               </div>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={riskHistogramData} barGap={0} barCategoryGap={1}>
+                  <BarChart data={realHistogram} barGap={0} barCategoryGap={1}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="range"
@@ -247,7 +281,7 @@ const Analytics = () => {
                       ]}
                     />
                     <Bar dataKey="count">
-                      {riskHistogramData.map((d, i) => (
+                      {realHistogram.map((d, i) => (
                         <Cell
                           key={i}
                           fill={i >= 3 ? "hsl(var(--risk-high))" : i >= 2 ? "hsl(var(--risk-medium))" : "hsl(var(--primary))"}
@@ -314,21 +348,17 @@ const Analytics = () => {
             </Card>
 
             <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-3">Activity Heatmap</h3>
-              <HeatmapChart data={heatmapData} />
+              <h3 className="text-sm font-semibold mb-3">Activity Indicator</h3>
+              <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded border border-dashed text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
+                Real-time Heatmap Stream
+              </div>
             </Card>
 
             <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-3">Velocity Trend</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={velocityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" fontSize={10} tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis fontSize={11} tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                  <Line type="monotone" dataKey="velocity" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              <h3 className="text-sm font-semibold mb-3">Linkage Volume</h3>
+              <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded border border-dashed text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
+                Network Propagation Trend
+              </div>
             </Card>
           </div>
 

@@ -43,8 +43,14 @@ async def analyze(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid CSV format")
 
     validation = validate_csv(df)
-    if not all(validation.values()):
-        raise HTTPException(status_code=400, detail="CSV validation failed")
+    if not validation["ok"]:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "errors": validation["errors"],
+                "stats": validation["stats"]
+            }
+        )
 
     G = build_graph(df)
 
@@ -67,19 +73,33 @@ async def analyze(file: UploadFile = File(...)):
     for s in smurfing:
         account_patterns.setdefault(s["receiver"], set()).add("smurfing")
 
+    # Aggregate edges for the graph
+    edges_df = df.groupby(["sender_id", "receiver_id"]).agg({
+        "amount": "sum",
+        "transaction_id": "count"
+    }).reset_index()
+    edges_df.columns = ["from", "to", "amount", "count"]
+    edges_list = edges_df.to_dict(orient="records")
+
+    # Calculate degrees for all accounts
+    all_senders = df.groupby("sender_id").size()
+    all_receivers = df.groupby("receiver_id").size()
+
     suspicious_accounts = []
     for acc, patterns in account_patterns.items():
         base_score = score_account(patterns)
         suspicious_accounts.append({
             "account_id": acc,
             "suspicion_score": base_score,
-            "detected_patterns": list(patterns)
+            "detected_patterns": list(patterns),
+            "in_degree": int(all_receivers.get(acc, 0)),
+            "out_degree": int(all_senders.get(acc, 0))
         })
 
     total_transactions = int(len(df))
     total_entities = int(pd.unique(pd.concat([df["sender_id"], df["receiver_id"]])).size)
-    total_edges = int(df[["sender_id", "receiver_id"]].drop_duplicates().shape[0])
+    total_edges = len(edges_df)
 
     processing_time = time.time() - start_time
 
-    return final_format(suspicious_accounts, rings, df, processing_time, total_entities, total_transactions, total_edges)
+    return final_format(suspicious_accounts, rings, df, processing_time, total_entities, total_transactions, total_edges, edges_list)

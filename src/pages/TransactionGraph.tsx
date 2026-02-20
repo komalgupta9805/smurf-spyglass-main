@@ -145,6 +145,19 @@ const TransactionGraph = () => {
     );
   }
 
+  if (accounts.length === 0 || (edges.length === 0 && !ringFocusMode)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
+        <AlertTriangle size={32} className="text-muted-foreground text-risk-medium" />
+        <p className="text-muted-foreground text-sm font-medium">No graph data available. Run analysis first.</p>
+        <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+          The analysis completed but no suspicious networks or entities were detected in this dataset.
+        </p>
+        <Button variant="ghost" size="sm" onClick={() => nav("/upload")}>Upload Different Dataset</Button>
+      </div>
+    );
+  }
+
   // Insight banner
   const topRing = rings.length > 0 ? rings.reduce((a, b) => (a.riskScore > b.riskScore ? a : b)) : null;
 

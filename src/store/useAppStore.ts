@@ -106,6 +106,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       set({
         validationResult: {
+          ok: columnsDetected,
           columnsDetected,
           timestampValid: columnsDetected,  // basic for now
           amountNumeric: columnsDetected,   // basic for now
@@ -133,12 +134,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ isProcessing: true });
 
-    const countCsvRows = async (file: File) => {
-      const text = await file.text();
-      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-      return Math.max(0, lines.length - 1); // minus header row
-    };
-
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -150,25 +145,37 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (!response.ok) {
         const err = await response.json();
-        set({ isProcessing: false });
-        alert(err.detail || "Invalid dataset");
+        set({
+          isProcessing: false,
+          validationResult: {
+            ok: false,
+            columnsDetected: false,
+            timestampValid: false,
+            amountNumeric: false,
+            amountPositive: false,
+            duplicateTxCount: err.detail?.stats?.duplicateTxCount || 0,
+            rowsParsed: err.detail?.stats?.rowsParsed || 0,
+            invalidRows: err.detail?.stats?.invalidRows || 0,
+            columns: err.detail?.stats?.columns || [],
+            errorMessages: err.detail?.errors || [err.detail || "Invalid dataset"]
+          }
+        });
         return;
       }
 
       const data = await response.json();
-      const txCount = await countCsvRows(file);
 
       set({
         isProcessing: false,
         hasAnalysis: true,
-        accounts: (data.suspicious_accounts || []).map((a: any) => ({
+        accounts: (data.graph?.nodes || data.suspicious_accounts || []).map((a: any) => ({
           id: a.account_id,
           riskScore: a.suspicion_score,
           confidence: 0.8,
-          ringId: a.ring_id ?? null,
-          inDegree: 0,
-          outDegree: 0,
-          uniqueCounterparties: 0,
+          ringId: (a.ring_id && a.ring_id !== "NONE") ? a.ring_id : null,
+          inDegree: a.in_degree || 0,
+          outDegree: a.out_degree || 0,
+          uniqueCounterparties: (a.in_degree || 0) + (a.out_degree || 0),
           velocityLabel: "medium",
           patterns: a.detected_patterns || [],
           totalIn: 0,
@@ -190,25 +197,48 @@ export const useAppStore = create<AppState>((set, get) => ({
           timeWindow: `${r.time_window?.start_time ?? ""} → ${r.time_window?.end_time ?? ""}`,
           totalFlow: 0,
         })),
-        edges: [],
+        edges: (data.graph?.edges || data.edges || []).map((e: any) => ({
+          from: String(e.from),
+          to: String(e.to),
+          amount: e.amount || 0,
+          count: e.count || 0
+        })),
         currentCase: {
           id: `CASE-${Date.now()}`,
           date: new Date().toISOString().slice(0, 10),
           fileName: file.name,
           datasetSize: 0,
           nodeCount: data.summary?.total_accounts_analyzed || 0,
-          edgeCount: 0,
+          edgeCount: data.summary?.total_edges || 0,
           txCount: data.summary?.total_transactions || 0,
           suspiciousCount: data.summary?.suspicious_accounts_flagged || 0,
           ringCount: data.summary?.fraud_rings_detected || 0,
           processingTime: data.summary?.processing_time_seconds || 0,
-          riskExposure: 0,
+          riskExposure: 75,
           timeWindow: "",
           topPatterns: ["cycle"],
           riskLevel: "medium",
         },
-
-        cases: [],
+        // Also update cases list
+        cases: [
+          {
+            id: `CASE-${Date.now()}`,
+            date: new Date().toISOString().slice(0, 10),
+            fileName: file.name,
+            datasetSize: 0,
+            nodeCount: data.summary?.total_accounts_analyzed || 0,
+            edgeCount: data.summary?.total_edges || 0,
+            txCount: data.summary?.total_transactions || 0,
+            suspiciousCount: data.summary?.suspicious_accounts_flagged || 0,
+            ringCount: data.summary?.fraud_rings_detected || 0,
+            processingTime: data.summary?.processing_time_seconds || 0,
+            riskExposure: 75,
+            timeWindow: "",
+            topPatterns: ["cycle"],
+            riskLevel: "medium",
+          },
+          ...get().cases
+        ]
       });
 
     } catch (error) {
