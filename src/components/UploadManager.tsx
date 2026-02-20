@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, BarChart3, Network, Download } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Loader2, BarChart3, Network, Download, AlertCircle } from "lucide-react";
 
 const formatBytes = (bytes: number) => {
     if (!bytes) return "0 B";
@@ -35,7 +36,7 @@ const UploadManager = () => {
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <Card
-                        className={`border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${dragOver ? "border-primary bg-accent" : "hover:border-primary/50"
+                        className={`border-2 border-dashed p-10 text-center cursor-pointer transition-all ${dragOver ? "border-primary bg-primary/5 shadow-md" : "hover:border-primary/50 hover:bg-accent/30"
                             }`}
                         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
@@ -51,9 +52,11 @@ const UploadManager = () => {
                             input.click();
                         }}
                     >
-                        <Upload className="mx-auto text-muted-foreground mb-3" size={32} />
-                        <p className="font-medium text-sm">Drop CSV file here or click to browse</p>
-                        <p className="text-xs text-muted-foreground mt-1">Accepts .csv files up to 50MB</p>
+                        <div className="animate-bounce-subtle">
+                            <Upload className="mx-auto text-primary mb-3" size={32} />
+                        </div>
+                        <p className="font-semibold text-sm">Drop CSV file here or click to browse</p>
+                        <p className="text-xs text-muted-foreground mt-1.5">Accepts .csv files up to 50MB • CSV format with standard columns</p>
                     </Card>
 
                     <Card className="p-4">
@@ -106,10 +109,22 @@ const UploadManager = () => {
                         </Card>
                     )}
                     {validationResult && !validationResult.columnsDetected && (
-                        <Card className="p-3 border border-destructive/30 bg-destructive/5 text-sm">
-                            ❌ Invalid CSV format. Required columns:
-                            <span className="font-mono"> transaction_id, sender_id, receiver_id, amount, timestamp</span>
-                        </Card>
+                        <Alert className="border-destructive/30 bg-destructive/5">
+                            <AlertCircle className="h-4 w-4 text-destructive" />
+                            <AlertDescription className="text-sm">
+                                <span className="font-semibold text-destructive">Invalid CSV format.</span> Required columns: 
+                                <span className="font-mono text-xs ml-1">transaction_id, sender_id, receiver_id, amount, timestamp</span>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {uploadedFile && validationResult && validationResult.invalidRows > 0 && (
+                        <Alert className="border-warning/30 bg-warning/5">
+                            <AlertTriangle className="h-4 w-4 text-warning" />
+                            <AlertDescription className="text-sm">
+                                <span className="font-semibold">{validationResult.invalidRows} rows</span> could not be parsed and will be skipped during analysis.
+                            </AlertDescription>
+                        </Alert>
                     )}
 
 

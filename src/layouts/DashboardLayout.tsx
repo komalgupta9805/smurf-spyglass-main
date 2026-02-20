@@ -26,12 +26,14 @@ const DashboardLayout = () => {
   return (
     <div className="min-h-screen grid-texture">
       {/* Top nav */}
-      <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
-        <div className="flex items-center h-12 px-4 gap-2">
+      <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-xl border-border/40 shadow-sm">
+        <div className="flex items-center h-12 px-4 gap-2 max-w-[1440px] mx-auto">
           {/* Brand */}
           <div className="flex items-center gap-2 mr-4 shrink-0">
-            <Shield size={20} className="text-primary" />
-            <span className="font-bold text-sm tracking-tight hidden sm:inline">smurfatcher</span>
+            <div className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 p-1.5">
+              <Shield size={20} className="text-primary" />
+            </div>
+            <span className="font-bold text-sm tracking-tight hidden sm:inline bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">smurfatcher</span>
           </div>
 
           {/* Tabs */}
@@ -42,10 +44,10 @@ const DashboardLayout = () => {
                 to={t.path}
                 className={({ isActive }) =>
                   cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors",
+                    "px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-all duration-200 hover:scale-105",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/70"
                   )
                 }
               >
@@ -57,8 +59,9 @@ const DashboardLayout = () => {
           {/* Right side */}
           <div className="flex items-center gap-2 shrink-0 ml-2">
             {processingTime !== null && (
-              <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 border border-primary/20 rounded-md px-2 py-0.5 font-bold uppercase tracking-tight">
-                Last analysis: {processingTime}s
+              <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 border border-primary/30 rounded-md px-2 py-0.5 font-bold uppercase tracking-tight animate-pulse-glow">
+                <Clock size={12} />
+                Last: {processingTime}s
               </div>
             )}
 
@@ -66,7 +69,7 @@ const DashboardLayout = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setSettingsOpen(true)}
-                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-all duration-200 hover:scale-110"
                 >
                   <Settings size={16} />
                 </button>
@@ -82,11 +85,11 @@ const DashboardLayout = () => {
         <Outlet />
       </main>
 
-      <footer className="p-6 mt-auto border-t bg-muted/30">
+      <footer className="p-6 mt-auto border-t bg-gradient-to-r from-card/50 to-card/30 backdrop-blur-sm">
         <div className="max-w-[1440px] mx-auto text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold flex flex-col items-center justify-center gap-1 opacity-60">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold flex flex-col items-center justify-center gap-1 opacity-70">
             <span className="flex items-center gap-2"><Shield size={10} className="text-primary" /> SPYGLASS AML ENGINE</span>
-            <span>All outputs are non-binding analytical indicators intended for compliance review. Final decisions require human investigation.</span>
+            <span className="text-[9px]">All outputs are non-binding analytical indicators intended for compliance review. Final decisions require human investigation.</span>
           </p>
         </div>
       </footer>

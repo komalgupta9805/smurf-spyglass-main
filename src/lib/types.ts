@@ -1,9 +1,15 @@
+/**
+ * Core type definitions for the smurfatcher AML detection engine
+ * Defines domain models and interfaces for accounts, networks, transactions, and analysis results
+ */
+
 export interface ScoreComponent {
   label: string;
   score: number;
   description: string;
 }
 
+/** Represents a single financial entity (account/node) in the transaction network */
 export interface Account {
   id: string;
   riskScore: number;
@@ -21,8 +27,10 @@ export interface Account {
   kCoreLevel: number;
   centralityScore: number;
   scoreBreakdown: ScoreComponent[];
+  activityHours?: number[];
 }
 
+/** Represents a suspicious network ring of connected entities */
 export interface Ring {
   id: string;
   riskScore: number;
@@ -33,8 +41,10 @@ export interface Ring {
   avgTxSize: number;
   timeWindow: string;
   totalFlow: number;
+  coordStrength: number;
 }
 
+/** Represents a complete analysis case run */
 export interface CaseRun {
   id: string;
   date: string;
@@ -49,9 +59,10 @@ export interface CaseRun {
   riskExposure: number;
   timeWindow: string;
   topPatterns: string[];
-  riskLevel: "high" | "medium" | "low";
+  riskLevel: RiskLevel;
 }
 
+/** CSV file validation result */
 export interface ValidationResult {
   ok: boolean;
   columnsDetected: boolean;
@@ -65,6 +76,7 @@ export interface ValidationResult {
   errorMessages?: string[];
 }
 
+/** Graph edge representation with aggregated transaction data */
 export interface GraphEdge {
   from: string;
   to: string;
@@ -72,6 +84,7 @@ export interface GraphEdge {
   count: number;
 }
 
+/** User preferences and analytical parameters */
 export interface Settings {
   nodeLimit: number;
   defaultLayout: "force" | "hierarchical" | "circular" | "ring";
@@ -88,12 +101,18 @@ export interface Settings {
 
 export type RiskLevel = "high" | "medium" | "low";
 
+/**
+ * Determine risk level classification from score
+ * @param score Numerical risk score (0-100)
+ * @returns Risk level classification
+ */
 export function getRiskLevel(score: number): RiskLevel {
   if (score >= 70) return "high";
   if (score >= 40) return "medium";
   return "low";
 }
 
+/** Intervention action to mitigate detected risks */
 export interface InterventionAction {
   type: "freeze" | "blacklist" | "fee";
   targetId: string;

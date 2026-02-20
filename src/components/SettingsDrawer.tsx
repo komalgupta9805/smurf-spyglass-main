@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useAppStore } from "@/store/useAppStore";
-import { HelpCircle, Info, MessageSquare, Shield, FileText, Settings2, ExternalLink } from "lucide-react";
+import { HelpCircle, Info, MessageSquare, Shield, FileText, Settings2, ExternalLink, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface SettingsDrawerProps {
     open: boolean;
@@ -16,6 +17,25 @@ interface SettingsDrawerProps {
 
 const SettingsDrawer = ({ open, onOpenChange }: SettingsDrawerProps) => {
     const { settings, updateSettings } = useAppStore();
+    const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" || "system";
+        setTheme(savedTheme);
+    }, []);
+
+    const toggleTheme = (newTheme: "light" | "dark" | "system") => {
+        setTheme(newTheme);
+        localStorage.setItem("theme", newTheme);
+        
+        const html = document.documentElement;
+        if (newTheme === "system") {
+            const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            html.classList.toggle("dark", isDark);
+        } else {
+            html.classList.toggle("dark", newTheme === "dark");
+        }
+    };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -29,6 +49,38 @@ const SettingsDrawer = ({ open, onOpenChange }: SettingsDrawerProps) => {
                 </SheetHeader>
 
                 <div className="mt-6 space-y-8 pb-12 text-sm">
+                    {/* Theme Selection */}
+                    <section className="space-y-4">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            Theme
+                        </h3>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => toggleTheme("light")}
+                                className={`p-3 rounded-lg border transition-all ${theme === "light" ? "bg-primary/10 border-primary" : "border-border hover:border-primary/50"}`}
+                            >
+                                <Sun size={16} className="mx-auto mb-1" />
+                                <span className="text-xs font-medium">Light</span>
+                            </button>
+                            <button
+                                onClick={() => toggleTheme("dark")}
+                                className={`p-3 rounded-lg border transition-all ${theme === "dark" ? "bg-primary/10 border-primary" : "border-border hover:border-primary/50"}`}
+                            >
+                                <Moon size={16} className="mx-auto mb-1" />
+                                <span className="text-xs font-medium">Dark</span>
+                            </button>
+                            <button
+                                onClick={() => toggleTheme("system")}
+                                className={`p-3 rounded-lg border transition-all ${theme === "system" ? "bg-primary/10 border-primary" : "border-border hover:border-primary/50"}`}
+                            >
+                                <Settings2 size={16} className="mx-auto mb-1" />
+                                <span className="text-xs font-medium">System</span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <Separator />
+
                     {/* Display Preferences */}
                     <section className="space-y-4">
                         <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">

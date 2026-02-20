@@ -7,6 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import RiskBadge from "@/components/RiskBadge";
+import ExportWizard from "@/components/ExportWizard";
 import { getRiskLevel } from "@/lib/types";
 import { Download, FileText, FileJson, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -278,11 +279,12 @@ const Report = () => {
           <h1 className="text-xl font-bold tracking-tight">Investigation Report</h1>
           <p className="text-sm text-muted-foreground">Case {currentCase.id} · {currentCase.date}</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={exportJSON} variant="outline" className="gap-1.5 text-xs h-9 border-dashed">
-            <FileJson size={14} className="text-primary" /> Download JSON
+        <div className="flex gap-2 flex-wrap">
+          <ExportWizard />
+          <Button onClick={exportJSON} variant="outline" className="gap-1.5 text-xs h-9">
+            <FileJson size={14} className="text-primary" /> JSON
           </Button>
-          <Button onClick={exportPDF} variant="outline" className="gap-1.5 text-xs h-9 border-dashed">
+          <Button onClick={exportPDF} variant="outline" className="gap-1.5 text-xs h-9">
             <FileText size={14} className="text-primary" /> PDF Report
           </Button>
         </div>

@@ -13,6 +13,9 @@ import StatsCard from "@/components/StatsCard";
 import RiskBadge from "@/components/RiskBadge";
 import HeatmapChart from "@/components/HeatmapChart";
 import FanInOutGraph from "@/components/FanInOutGraph";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
+import NetworkPropagation from "@/components/NetworkPropagation";
+import AdvancedFilters, { FilterState } from "@/components/AdvancedFilters";
 import { getRiskLevel } from "@/lib/types";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -27,7 +30,7 @@ import { cn } from "@/lib/utils";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 
 const riskColor = (l: string) =>
   l === "high" ? "hsl(var(--risk-high))" : l === "medium" ? "hsl(var(--risk-medium))" : "hsl(var(--risk-low))";
@@ -130,7 +133,7 @@ const patternDetails: Record<string, { title: string, explanation: string, impac
   }
 };
 
-const PatternBadge = ({ pattern }: { pattern: string }) => {
+const PatternBadge = memo(({ pattern }: { pattern: string }) => {
   const details = patternDetails[pattern] || { title: pattern, explanation: "Behavioral indicator", impact: "Contributes to overall risk score." };
 
   return (
@@ -155,12 +158,17 @@ const PatternBadge = ({ pattern }: { pattern: string }) => {
       </PopoverContent>
     </Popover>
   );
-};
+});
 
 const Analytics = () => {
   const { hasAnalysis, currentCase, accounts, edges, rings, openWhyPanel, selectRing, setRingFocusMode } = useAppStore();
   const nav = useNavigate();
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    riskLevels: [],
+    patterns: [],
+    searchQuery: "",
+  });
 
   const realHistogram = useMemo(() => generateHistogram(accounts), [accounts]);
   const scatterData = useMemo(() => accounts.map(a => ({
@@ -172,6 +180,22 @@ const Analytics = () => {
     pattern: a.patterns[0]
   })), [accounts]);
 
+  // Apply filters to accounts
+  const filteredAccounts = useMemo(() => {
+    return accounts.filter(a => {
+      if (filters.searchQuery && !a.id.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
+        return false;
+      }
+      if (filters.riskLevels.length > 0 && !filters.riskLevels.includes(getRiskLevel(a.riskScore))) {
+        return false;
+      }
+      if (filters.patterns.length > 0 && !a.patterns.some(p => filters.patterns.includes(p))) {
+        return false;
+      }
+      return true;
+    });
+  }, [accounts, filters]);
+
   if (!hasAnalysis || !currentCase) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
@@ -181,15 +205,15 @@ const Analytics = () => {
     );
   }
 
-  const suspicious = accounts.filter((a) => a.riskScore >= 60).sort((a, b) => b.riskScore - a.riskScore);
+  const suspicious = filteredAccounts.filter((a) => a.riskScore >= 60).sort((a, b) => b.riskScore - a.riskScore);
   const topRings = [...rings].sort((a, b) => b.riskScore - a.riskScore);
-  const maxDeg = accounts.length > 0
-    ? accounts.reduce((m, a) => (a.inDegree > m.inDegree ? a : m), accounts[0])
+  const maxDeg = filteredAccounts.length > 0
+    ? filteredAccounts.reduce((m, a) => (a.inDegree > m.inDegree ? a : m), filteredAccounts[0])
     : { id: "N/A", inDegree: 0 };
-  const maxOut = accounts.length > 0
-    ? accounts.reduce((m, a) => (a.outDegree > m.outDegree ? a : m), accounts[0])
+  const maxOut = filteredAccounts.length > 0
+    ? filteredAccounts.reduce((m, a) => (a.outDegree > m.outDegree ? a : m), filteredAccounts[0])
     : { id: "N/A", outDegree: 0 };
-  const topCentral = [...accounts].sort((a, b) => b.centralityScore - a.centralityScore).slice(0, 5);
+  const topCentral = [...filteredAccounts].sort((a, b) => b.centralityScore - a.centralityScore).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -220,6 +244,12 @@ const Analytics = () => {
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-0">
+          {/* Advanced Filters */}
+          <AdvancedFilters
+            onFiltersChange={setFilters}
+            availablePatterns={[...new Set(accounts.flatMap(a => a.patterns))]}
+          />
+
           {/* KPI Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Tooltip>
@@ -349,16 +379,12 @@ const Analytics = () => {
 
             <Card className="p-4">
               <h3 className="text-sm font-semibold mb-3">Activity Indicator</h3>
-              <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded border border-dashed text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
-                Real-time Heatmap Stream
-              </div>
+              <ActivityHeatmap />
             </Card>
 
             <Card className="p-4">
               <h3 className="text-sm font-semibold mb-3">Linkage Volume</h3>
-              <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded border border-dashed text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
-                Network Propagation Trend
-              </div>
+              <NetworkPropagation />
             </Card>
           </div>
 
