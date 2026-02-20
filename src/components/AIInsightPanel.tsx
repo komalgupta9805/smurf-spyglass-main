@@ -26,8 +26,15 @@ const AIInsightPanel = ({
 }: AIInsightPanelProps) => {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const patternArray = Array.from(patterns.values());
-  const riskArray = Array.from(riskExplanations.values());
+  // Safely convert Maps to arrays, handling undefined/null
+  const patternArray = patterns instanceof Map ? Array.from(patterns.values()) : [];
+  const riskArray = riskExplanations instanceof Map ? Array.from(riskExplanations.values()) : [];
+  const recsArray = Array.isArray(recommendations) ? recommendations : [];
+
+  // Don't render if no data
+  if (patternArray.length === 0 && riskArray.length === 0 && recsArray.length === 0) {
+    return null;
+  }
 
   return (
     <Sheet open={panelOpen} onOpenChange={(open) => !open && onClose?.()}>

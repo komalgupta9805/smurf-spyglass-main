@@ -294,34 +294,66 @@ export const useAppStore = create<AppState>((set, get) => ({
     }),
 
   loadSampleData: () => {
-    const c = sampleCases[0];
-    const accounts = sampleAccounts;
-    const rings = sampleRings;
-    
-    // Generate AI interpretations
-    const patternInterpretations = interpretAllPatterns(rings, accounts);
-    const riskExplanations = explainAllRisks(accounts);
-    const investigationRecommendations = generateInvestigationRecommendations(
-      accounts.filter(a => a.riskScore >= 60),
-      rings
-    );
-    const caseSummary = generateCaseSummary(c, accounts, rings);
+    try {
+      const c = sampleCases[0];
+      const accounts = sampleAccounts;
+      const rings = sampleRings;
+      
+      // Generate AI interpretations safely
+      let patternInterpretations = new Map();
+      let riskExplanations = new Map();
+      let investigationRecommendations: InvestigationRecommendation[] = [];
+      let caseSummary: CaseSummary | null = null;
 
-    set({
-      hasAnalysis: true,
-      currentCase: c,
-      cases: sampleCases,
-      accounts,
-      rings,
-      edges: sampleEdges,
-      processingTime: c.processingTime,
-      mitigationSummary: null,
-      interventionScenario: [],
-      patternInterpretations,
-      riskExplanations,
-      investigationRecommendations,
-      caseSummary,
-    });
+      try {
+        patternInterpretations = interpretAllPatterns(rings, accounts);
+      } catch (e) {
+        console.warn("[v0] Pattern interpretation error:", e);
+      }
+
+      try {
+        riskExplanations = explainAllRisks(accounts);
+      } catch (e) {
+        console.warn("[v0] Risk explanation error:", e);
+      }
+
+      try {
+        investigationRecommendations = generateInvestigationRecommendations(
+          accounts.filter(a => a.riskScore >= 60),
+          rings
+        );
+      } catch (e) {
+        console.warn("[v0] Investigation recommendation error:", e);
+      }
+
+      try {
+        caseSummary = generateCaseSummary(c, accounts, rings);
+      } catch (e) {
+        console.warn("[v0] Case summary generation error:", e);
+      }
+
+      set({
+        hasAnalysis: true,
+        currentCase: c,
+        cases: sampleCases,
+        accounts,
+        rings,
+        edges: sampleEdges,
+        processingTime: c.processingTime,
+        mitigationSummary: null,
+        interventionScenario: [],
+        patternInterpretations,
+        riskExplanations,
+        investigationRecommendations,
+        caseSummary,
+      });
+    } catch (error) {
+      console.error("[v0] Error loading sample data:", error);
+      // Fall back to basic data
+      set({
+        hasAnalysis: false,
+      });
+    }
   },
 
   addIntervention: (action) =>

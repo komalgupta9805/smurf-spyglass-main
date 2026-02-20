@@ -117,13 +117,15 @@ const DashboardLayout = () => {
 
       <WhyScorePanel />
       <SettingsDrawer open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <AIInsightPanel
-        patterns={patternInterpretations}
-        riskExplanations={riskExplanations}
-        recommendations={investigationRecommendations}
-        panelOpen={showAIPanel}
-        onClose={() => useAppStore.setState({ showAIPanel: false })}
-      />
+      {showAIPanel && (
+        <AIInsightPanel
+          patterns={patternInterpretations}
+          riskExplanations={riskExplanations}
+          recommendations={investigationRecommendations}
+          panelOpen={showAIPanel}
+          onClose={() => useAppStore.setState({ showAIPanel: false })}
+        />
+      )}
     </div>
   );
 };
