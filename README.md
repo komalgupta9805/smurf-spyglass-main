@@ -1,73 +1,312 @@
-# Welcome to your Lovable project
 
-## Project info
+# Smurfatcher
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Deterministic Graph-Based Money Muling Detection Engine
 
-## How can I edit this code?
+**Live Demo:** [Insert Live URL]
+**GitHub Repository:** [Insert Repo URL]
+**Demo Video:** [Insert LinkedIn Video URL]
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Overview
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+MuleCatcher is a web-based financial forensics engine designed to detect money muling networks using structural graph analysis.
 
-Changes made via Lovable will be committed automatically to this repo.
+Rather than analyzing transactions in isolation, MuleCatcher models transaction flow as a directed network and identifies coordinated laundering structures including circular routing, smurfing aggregation, and layered shell chains.
 
-**Use your preferred IDE**
+The system is deterministic, explainable, and performance-aware. It generates structured analytical indicators to support compliance investigation workflows rather than automatically declaring fraud.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Problem Understanding
 
-Follow these steps:
+Money muling is not a single-transaction anomaly.
+It is a coordinated network behavior.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Illicit funds are routed across multiple accounts through layered paths to obscure origin and ownership. Traditional rule-based SQL queries and isolated anomaly detection systems struggle to detect such multi-hop structures.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Effective detection requires:
 
-# Step 3: Install the necessary dependencies.
-npm i
+* Network-level modeling
+* Structural pattern detection
+* Temporal enforcement
+* Ring-level investigation
+* Controlled false-positive management
+* Explainable scoring
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+MuleCatcher addresses these requirements directly.
+
+---
+
+## Detection Architecture
+
+### 1. Directed Graph Modeling
+
+* Accounts are represented as nodes
+* Transactions are represented as directed edges (sender → receiver)
+* The dataset becomes a transaction network
+
+This representation enables structural laundering detection beyond flat rule queries.
+
+---
+
+### 2. Circular Fund Routing (Cycle Detection 3–5 Nodes)
+
+Detects bounded cycles such as:
+
+A → B → C → A
+
+Circular routing is commonly used in the layering stage of money laundering.
+
+Cycle detection is bounded to ensure scalability and controlled computational cost.
+
+All accounts within a detected cycle are grouped into the same fraud ring.
+
+---
+
+### 3. Smurfing Detection (Fan-In / Fan-Out Within 72 Hours)
+
+Detects:
+
+* 10+ senders to one receiver within 72 hours
+* One sender to 10+ receivers within 72 hours
+
+Strict temporal enforcement ensures that structural velocity is captured rather than simple high-volume activity.
+
+---
+
+### 4. Layered Shell Chain Detection
+
+Identifies transaction chains of 3 or more hops where intermediate accounts have minimal transaction history.
+
+Low-activity intermediaries often function as temporary pass-through layers in laundering schemes.
+
+---
+
+### 5. Fraud Ring Formation
+
+Suspicious accounts connected through structural patterns are merged into fraud rings.
+
+This mirrors real AML case workflows, where investigations are case-centric rather than account-centric.
+
+---
+
+## Suspicion Scoring Methodology
+
+Each suspicious account receives a **suspicion_score (0–100)** based on:
+
+* Structural pattern type detected
+* Multi-pattern reinforcement
+* Temporal compression
+* Role within the network
+
+Scoring characteristics:
+
+* Fully deterministic
+* Transparent logic
+* No black-box machine learning
+* Traceable risk attribution
+
+Suspicion scores are sorted in descending order as required by the problem statement.
+
+---
+
+## False Positive Controls
+
+To meet precision requirements and avoid over-flagging legitimate activity:
+
+* Single-pattern signals do not automatically escalate to high risk
+* Multi-pattern reinforcement increases confidence
+* High-volume distributions are evaluated conservatively
+* Output remains advisory rather than declarative
+
+The system supports investigator decision-making without replacing it.
+
+---
+
+## AI Interpretation Layer
+
+MuleCatcher includes an optional AI interpretation layer designed to enhance clarity without altering detection logic.
+
+The AI component does not influence:
+
+* Pattern detection
+* Ring formation
+* Suspicion scoring
+* Risk classification
+
+All core detection remains deterministic.
+
+### Purpose
+
+The AI layer generates:
+
+* Executive case summaries
+* Structural explanations of detected patterns
+* Risk context interpretation
+* Suggested next investigation steps
+
+This reduces cognitive load for non-technical reviewers while preserving full transparency.
+
+### Architecture
+
+```
+CSV Upload
+   ↓
+Validation
+   ↓
+Graph Construction
+   ↓
+Pattern Detection
+   ↓
+Ring Formation
+   ↓
+Deterministic Risk Scoring
+   ↓
+Structured JSON Output
+   ↓
+AI Interpretation (Read-Only)
+   ↓
+Frontend Display
 ```
 
-**Edit a file directly in GitHub**
+The AI model reads structured output only.
+It cannot modify detection results or risk scores.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+This separation ensures auditability and regulatory defensibility.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## What Differentiates This Approach
 
-## What technologies are used for this project?
+Many fraud detection systems rely on anomaly scoring or static thresholds.
 
-This project is built with:
+MuleCatcher differentiates itself through:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**1. Structural Coordination Modeling**
+Focuses on coordinated network behavior rather than isolated anomalies.
 
-## How can I deploy this project?
+**2. Deterministic and Explainable Logic**
+Every score is derived from explicit structural signals.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+**3. Ring-Centric Investigation Model**
+Fraud rings are prioritized over individual accounts.
 
-## Can I connect a custom domain to my Lovable project?
+**4. Multi-Pattern Reinforcement Strategy**
+Higher risk classifications require overlapping structural signals, improving precision.
 
-Yes, you can!
+**5. Performance-Conscious Engineering**
+Bounded cycle detection ensures scalability within the 30-second constraint for datasets up to 10,000 transactions.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Output Schema Compliance
+
+The backend strictly adheres to the required JSON format:
+
+* suspicious_accounts
+* fraud_rings
+* summary
+
+All mandatory fields are included:
+
+* account_id
+* suspicion_score
+* detected_patterns
+* ring_id
+* risk_score
+* processing_time_seconds
+
+A downloadable JSON file is provided.
+
+---
+
+## Interactive Visualization
+
+The application provides:
+
+* Directed transaction graph
+* Clearly highlighted fraud rings
+* Visually distinct suspicious accounts
+* Ring summary table
+* Clickable node-level details
+
+Visualization prioritizes clarity and interpretability.
+
+---
+
+## Performance
+
+Designed to process up to 10,000 transactions within the required 30-second limit.
+
+Performance optimizations include:
+
+* Bounded cycle detection
+* Efficient graph traversal
+* Controlled subgraph rendering
+* No heavy ML computation
+
+Processing time is recorded and displayed.
+
+---
+
+## Technology Stack
+
+Frontend
+
+* React / Next.js
+* TypeScript
+* Vercel
+
+Backend
+
+* FastAPI
+* NetworkX
+* Pandas
+
+Deployment
+
+* Vercel (Frontend)
+* Render (Backend)
+
+---
+
+## Known Limitations
+
+* Thresholds are rule-based rather than statistically calibrated
+* Transaction amount weighting can be further expanded
+* Batch processing only (no streaming ingestion)
+* No external enrichment (KYC, sanctions, geography)
+
+These areas can be extended in a production deployment.
+
+---
+
+## Usage
+
+1. Upload CSV file with required schema
+2. Run analysis
+3. Review fraud rings and suspicious accounts
+4. Explore transaction graph
+5. Download JSON output
+
+---
+
+## Disclaimer
+
+All outputs are analytical indicators intended for compliance review.
+Final decisions require human investigation.
+
+---
+
+## Team
+
+komal gupta
+ananya gupta
+samridhi 
+
+### Positioning Statement
+
+MuleCatcher models money muling as coordinated network behavior rather than isolated anomalies, enabling explainable, case-centric financial investigation within strict performance and compliance constraints.
+
