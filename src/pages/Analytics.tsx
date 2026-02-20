@@ -16,6 +16,8 @@ import FanInOutGraph from "@/components/FanInOutGraph";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import NetworkPropagation from "@/components/NetworkPropagation";
 import AdvancedFilters, { FilterState } from "@/components/AdvancedFilters";
+import PatternExplanation from "@/components/PatternExplanation";
+import InvestigationGuide from "@/components/InvestigationGuide";
 import { getRiskLevel } from "@/lib/types";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -24,7 +26,7 @@ import {
 } from "recharts";
 import {
   Users, ArrowRightLeft, AlertTriangle, Network, Clock, HelpCircle,
-  ExternalLink, TrendingUp, Zap, Layers, Target, Info, ArrowRight
+  ExternalLink, TrendingUp, Zap, Layers, Target, Info, ArrowRight, Lightbulb
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -161,7 +163,7 @@ const PatternBadge = memo(({ pattern }: { pattern: string }) => {
 });
 
 const Analytics = () => {
-  const { hasAnalysis, currentCase, accounts, edges, rings, openWhyPanel, selectRing, setRingFocusMode } = useAppStore();
+  const { hasAnalysis, currentCase, accounts, edges, rings, openWhyPanel, selectRing, setRingFocusMode, patternInterpretations, investigationRecommendations } = useAppStore();
   const nav = useNavigate();
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({
@@ -411,14 +413,35 @@ const Analytics = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topRings.map((ring) => (
-                      <TableRow key={ring.id} className="h-12 group">
-                        <TableCell className="font-mono text-xs font-bold py-2">{ring.id}</TableCell>
-                        <TableCell className="text-center py-2">
-                          <Badge variant="secondary" className="text-[10px]">{ring.members.length}</Badge>
-                        </TableCell>
+                    {topRings.map((ring) => {
+                      const interpretation = patternInterpretations.get(ring.id);
+                      return (
+                        <TableRow key={ring.id} className="h-12 group">
+                          <TableCell className="font-mono text-xs font-bold py-2">{ring.id}</TableCell>
+                          <TableCell className="text-center py-2">
+                            <Badge variant="secondary" className="text-[10px]">{ring.members.length}</Badge>
+                          </TableCell>
                         <TableCell className="py-2">
-                          <PatternBadge pattern={ring.patternType} />
+                          {interpretation ? (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <div className="cursor-help flex items-center gap-1">
+                                  <PatternBadge pattern={ring.patternType} />
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpCircle size={12} className="text-primary opacity-50" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">AI Explanation</TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </PopoverTrigger>
+                              <PopoverContent side="right" className="w-80 p-0">
+                                <PatternExplanation interpretation={interpretation} compact={false} />
+                              </PopoverContent>
+                            </Popover>
+                          ) : (
+                            <PatternBadge pattern={ring.patternType} />
+                          )}
                         </TableCell>
                         <TableCell className="py-2">
                           <RiskBadge level={getRiskLevel(ring.riskScore)} score={ring.riskScore} size="sm" />
@@ -441,7 +464,8 @@ const Analytics = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -493,6 +517,16 @@ const Analytics = () => {
               </Card>
             </div>
           </div>
+
+          {/* AI Investigation Recommendations */}
+          {investigationRecommendations.length > 0 && (
+            <Card className="p-4 border-primary/20 bg-primary/5">
+              <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
+                <Lightbulb size={16} className="text-primary" /> AI Investigation Recommendations
+              </h3>
+              <InvestigationGuide recommendations={investigationRecommendations.slice(0, 2)} compact={true} />
+            </Card>
+          )}
 
           <Card className="p-4">
             <h3 className="text-sm font-semibold mb-3">Risk Distribution Table</h3>

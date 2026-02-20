@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import RiskBadge from "@/components/RiskBadge";
-import { TrendingUp, ArrowRight, Database, Users } from "lucide-react";
+import RiskBreakdown from "@/components/RiskBreakdown";
+import { TrendingUp, ArrowRight, Database, Users, Info } from "lucide-react";
 import { getRiskLevel } from "@/lib/types";
+import { useState } from "react";
 
 const Entities = () => {
-  const { cases, hasAnalysis, accounts } = useAppStore();
+  const { cases, hasAnalysis, accounts, riskExplanations } = useAppStore();
   const nav = useNavigate();
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -32,17 +36,32 @@ const Entities = () => {
               <Users size={16} className="text-primary" /> Current Detected Entities ({accounts.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {accounts.slice(0, 12).map((a) => (
-                <Card key={a.id} className="p-3 hover:border-primary/50 cursor-pointer transition-colors" onClick={() => nav("/analytics")}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold">{a.id}</span>
-                    <RiskBadge level={getRiskLevel(a.riskScore)} score={a.riskScore} size="sm" />
-                  </div>
-                  <div className="mt-2 flex gap-1 flex-wrap">
-                    {a.patterns.map(p => <Badge key={p} variant="secondary" className="px-1 py-0 text-[9px]">{p}</Badge>)}
-                  </div>
-                </Card>
-              ))}
+              {accounts.slice(0, 12).map((a) => {
+                const explanation = riskExplanations.get(a.id);
+                return (
+                  <Popover key={a.id}>
+                    <PopoverTrigger asChild>
+                      <Card className="p-3 hover:border-primary/50 cursor-pointer transition-colors">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-bold">{a.id}</span>
+                          <div className="flex items-center gap-1.5">
+                            <RiskBadge level={getRiskLevel(a.riskScore)} score={a.riskScore} size="sm" />
+                            {explanation && <Info size={12} className="text-primary opacity-60" />}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex gap-1 flex-wrap">
+                          {a.patterns.map(p => <Badge key={p} variant="secondary" className="px-1 py-0 text-[9px]">{p}</Badge>)}
+                        </div>
+                      </Card>
+                    </PopoverTrigger>
+                    {explanation && (
+                      <PopoverContent side="right" className="w-80 p-0">
+                        <RiskBreakdown explanation={explanation} showDetails={false} />
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                );
+              })}
             </div>
             {accounts.length > 12 && (
               <p className="text-center text-[10px] text-muted-foreground mt-4">Showing top 12 entities. See Analytics for full list.</p>

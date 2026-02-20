@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import RiskBadge from "@/components/RiskBadge";
 import ExportWizard from "@/components/ExportWizard";
+import CaseSummary from "@/components/CaseSummary";
 import { getRiskLevel } from "@/lib/types";
 import { Download, FileText, FileJson, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -169,7 +170,7 @@ const PatternDrawer = ({ type, data }: { type: string, data?: any }) => {
 };
 
 const Report = () => {
-  const { hasAnalysis, currentCase, accounts, rings } = useAppStore();
+  const { hasAnalysis, currentCase, accounts, rings, caseSummary } = useAppStore();
   const nav = useNavigate();
 
   if (!hasAnalysis || !currentCase) {
@@ -286,6 +287,14 @@ const Report = () => {
           </Button>
           <Button onClick={exportPDF} variant="outline" className="gap-1.5 text-xs h-9">
             <FileText size={14} className="text-primary" /> PDF Report
+          </Button>
+        </div>
+      </div>
+
+      {/* AI Case Summary */}
+      {caseSummary && (
+        <CaseSummary summary={caseSummary} expanded={false} />
+      )}
           </Button>
         </div>
       </div>

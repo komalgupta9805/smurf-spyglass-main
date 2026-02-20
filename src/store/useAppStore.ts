@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Account, Ring, CaseRun, GraphEdge, ValidationResult, Settings, InterventionAction, MitigationSummary } from "@/lib/types";
+import type { PatternInterpretation, RiskExplanation, InvestigationRecommendation, CaseSummary } from "@/lib/ai/types";
 import {
   sampleAccounts,
   sampleRings,
@@ -7,6 +8,10 @@ import {
   sampleCases,
 } from "@/lib/mockData";
 import { API_BASE_URL } from "@/src/config";
+import { interpretAllPatterns } from "@/lib/ai/patternInterpreter";
+import { explainAllRisks } from "@/lib/ai/riskExplainer";
+import { generateInvestigationRecommendations } from "@/lib/ai/investigationRecommender";
+import { generateCaseSummary } from "@/lib/ai/summaryGenerator";
 
 interface AppState {
   hasAnalysis: boolean;
@@ -23,7 +28,7 @@ interface AppState {
 
   selectedAccountId: string | null;
   selectedRingId: string | null;
-  ringFocusMode: boolean; // New focus mode state
+  ringFocusMode: boolean;
   showWhyPanel: boolean;
   whyAccountId: string | null;
 
@@ -33,17 +38,25 @@ interface AppState {
   interventionScenario: InterventionAction[];
   mitigationSummary: MitigationSummary | null;
 
+  // AI Interpretations (new)
+  patternInterpretations: Map<string, PatternInterpretation>;
+  riskExplanations: Map<string, RiskExplanation>;
+  investigationRecommendations: InvestigationRecommendation[];
+  caseSummary: CaseSummary | null;
+  showAIPanel: boolean;
+
   setUploadedFile: (file: File | null) => void;
   validateFile: () => void;
   runAnalysis: () => Promise<void>;
   selectAccount: (id: string | null) => void;
   selectRing: (id: string | null) => void;
-  setRingFocusMode: (active: boolean) => void; // New focus mode action
+  setRingFocusMode: (active: boolean) => void;
   openWhyPanel: (accountId: string) => void;
   closeWhyPanel: () => void;
   updateSettings: (s: Partial<Settings>) => void;
   resetAnalysis: () => void;
   loadSampleData: () => void;
+  toggleAIPanel: () => void;
 
   // Intervention actions
   addIntervention: (action: InterventionAction) => void;
@@ -86,6 +99,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   settings: { ...defaultSettings },
   interventionScenario: [],
   mitigationSummary: null,
+  patternInterpretations: new Map(),
+  riskExplanations: new Map(),
+  investigationRecommendations: [],
+  caseSummary: null,
+  showAIPanel: false,
 
   setUploadedFile: (file) =>
     set({ uploadedFile: file, validationResult: null }),
@@ -255,6 +273,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   openWhyPanel: (id) => set({ showWhyPanel: true, whyAccountId: id }),
   closeWhyPanel: () => set({ showWhyPanel: false, whyAccountId: null }),
 
+  toggleAIPanel: () => set((state) => ({ showAIPanel: !state.showAIPanel })),
+
   updateSettings: (s) =>
     set((state) => ({ settings: { ...state.settings, ...s } })),
 
@@ -275,16 +295,33 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadSampleData: () => {
     const c = sampleCases[0];
+    const accounts = sampleAccounts;
+    const rings = sampleRings;
+    
+    // Generate AI interpretations
+    const patternInterpretations = interpretAllPatterns(rings, accounts);
+    const riskExplanations = explainAllRisks(accounts);
+    const investigationRecommendations = generateInvestigationRecommendations(
+      accounts.filter(a => a.riskScore >= 60),
+      rings
+    );
+    const caseSummary = generateCaseSummary(c, accounts, rings);
+
     set({
       hasAnalysis: true,
       currentCase: c,
       cases: sampleCases,
-      accounts: sampleAccounts,
-      rings: sampleRings,
+      accounts,
+      rings,
       edges: sampleEdges,
       processingTime: c.processingTime,
       mitigationSummary: null,
       interventionScenario: [],
+      patternInterpretations,
+      riskExplanations,
+      investigationRecommendations,
+      caseSummary,
+    });
     });
   },
 
